@@ -24,6 +24,11 @@ description = "Run the `tests/` suite via `Lune`"
 run = "lune run tests/run"
 
 [tasks.build]
+description = "Build .rbxm file & run `lint`"
+depends = ["lint"]
+run = "rojo build -o build.rbxm"
+
+[tasks.buildx]
 description = "Build .rbxlx file & run `lint`"
 depends = ["lint"]
 run = "rojo build -o build.rbxlx"
