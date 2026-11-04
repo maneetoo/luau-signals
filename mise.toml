@@ -26,7 +26,7 @@ run = "lune run tests/run"
 [tasks.build]
 description = "Build .rbxlx file & run `lint`"
 depends = ["lint"]
-run = "rojo build -o Slice.rbxlx"
+run = "rojo build -o build.rbxlx"
 
 [tasks.serve]
 description = "Serve local server via `Rojo` to replecate `default.project.json`"
