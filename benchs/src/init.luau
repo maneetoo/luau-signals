@@ -9,7 +9,7 @@ const fluid, vide, signals =
 const SAMPLES, TARGET_SAMPLE, HUGE = 11, .03, math.huge
 const YIELD_BETWEEN_GROUPS: boolean, STOP_ON_MISSING: boolean = true, false
 
-type Scope = 'fluid' | 'vide' | 'signals'
+type Scope = 'fluid' | 'vide' | 'signals' | 'flux'
 type Group = 'source' | 'write' | 'effect' | 'derive' | 'batch' | 'all'
 
 type Instance = {
@@ -105,7 +105,7 @@ return function(scope: Scope?, group: Group?, waitBeforeStart: number?): ()
     waitBeforeStart = (waitBeforeStart or 0)
 
     assert((function(): boolean
-        if (scope == 'fluid' or scope == 'signals' or scope == 'vide') then
+        if (scope == 'fluid' or scope == 'signals' or scope == 'vide' or scope == 'flux') then
             return true
         end
         return false

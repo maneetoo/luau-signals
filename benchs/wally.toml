@@ -7,4 +7,5 @@ realm = "shared"
 [dependencies]
 vide = "centau/vide@0.4.1"
 fluid = "ffrostfall/fluid@0.6.5"
-luau-signals = "maneetoo/luau-signals@0.1.0"
+luau-signals = "maneetoo/luau-signals@0.1.1"
+flux = "kohltastrophe/flux@0.4.0"

@@ -91,6 +91,37 @@ Currently, `Vide` is the most popular and frequently chosen reactivity library f
 | `write → 100 effects` | **20.16 µs** | 136.33 µs | 🟢 signals | **6.76×** |
 </details>
 
+<details>
+	<summary>Comparing with Flux (@kohltastrophe)</summary>
+
+| Scenario | `signals` | `flux` | Winner | Rupture |
+|:--|--:|--:|:--|--:|
+| `batch: 10 writes, batched` | **2.10 µs** | 2.22 µs | 🟢 signals | 1.06× |
+| `batch: 10 writes, no batch` | **11.38 µs** | 12.38 µs | 🟢 signals | 1.09× |
+| `derive: 1 src → 50 derives → 1 effect` | **13.59 µs** | 15.03 µs | 🟢 signals | 1.11× |
+| `derive: chain depth 10` | **2.30 µs** | 3.01 µs | 🟢 signals | **1.31×** |
+| `derive: chain depth 10 → effect` | **2.43 µs** | 2.85 µs | 🟢 signals | 1.17× |
+| `derive: chain depth 40` | **7.78 µs** | 8.52 µs | 🟢 signals | 1.10× |
+| `derive: cutoff (value unchanged)` | **602.9 ns** | 678.0 ns | 🟢 signals | 1.12× |
+| `derive: diamond → effect` | **1.12 µs** | 1.34 µs | 🟢 signals | 1.20× |
+| `derive: unobserved (lazy vs eager)` | 136.9 ns | **135.1 ns** | ≈ equal | ~1.0× |
+| `derive: write + read (depth 1)` | **366.4 ns** | 448.0 ns | 🟢 signals | 1.22× |
+| `effect: create + dispose` | **1.15 µs** | 1.37 µs | 🟢 signals | 1.19× |
+| `effect: dynamic deps (branch toggle)` | **728.8 ns** | 820.4 ns | 🟢 signals | 1.13× |
+| `effect: rerun with cleanup` | **476.2 ns** | 536.8 ns | 🟢 signals | 1.13× |
+| `graph: 20 src + 20 derive` | 22.84 µs | **22.52 µs** | ≈ equal | ~1.0× |
+| `mixed: 30 src, 60 derive, 15 effects` | **2.97 µs** | 3.09 µs | ≈ equal | ~1.0× |
+| `source: create` | **116.8 ns** | 127.7 ns | 🟢 signals | 1.09× |
+| `source: read (untracked)` | **36.9 ns** | 40.9 ns | 🟢 signals | 1.11× |
+| `source: write, no subscribers` | **48.0 ns** | 53.8 ns | 🟢 signals | 1.12× |
+| `source: write, same value (no-op)` | **39.1 ns** | 41.8 ns | 🟢 signals | 1.07× |
+| `write → 1 effect` | **420.0 ns** | 499.1 ns | 🟢 signals | 1.19× |
+| `write → 10 effects` | **2.20 µs** | 2.43 µs | 🟢 signals | 1.10× |
+| `write → 100 effects` | **18.57 µs** | 20.69 µs | 🟢 signals | 1.11× |
+
+`flux` is close to `signals` — within 1.1–1.3× on almost every scenario, unlike `fluid` (2–46× slower). The one clear gap is `derive: chain depth 10` at 1.31×; `unobserved`, `graph`, and `mixed` are within noise. This suggests `flux` also uses a lazy push-pull model with similar overhead; the difference is likely in constant factors (`getmetatable` vs internal tags, closure handling, queue flush strategy) rather than architecture.
+</details>
+
 
 ## Code Sample
 ```luau
