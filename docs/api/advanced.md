@@ -118,7 +118,6 @@ const system = require '@self/system'
 `ReactiveFlags` values are useful when building debugging tools that inspect node state:
 
 ```luau
-const bit32 = bit32
 local Dirty = system.ReactiveFlags.Dirty
 
 local function isDirty(node: any): boolean
