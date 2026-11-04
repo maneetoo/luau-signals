@@ -104,13 +104,13 @@ Currently, `Vide` is the most popular and frequently chosen reactivity library f
 | `derive: chain depth 40` | **7.78 µs** | 8.52 µs | 🟢 signals | 1.10× |
 | `derive: cutoff (value unchanged)` | **602.9 ns** | 678.0 ns | 🟢 signals | 1.12× |
 | `derive: diamond → effect` | **1.12 µs** | 1.34 µs | 🟢 signals | 1.20× |
-| `derive: unobserved (lazy vs eager)` | 136.9 ns | **135.1 ns** | ≈ equal | ~1.0× |
+| `derive: unobserved (lazy vs eager)` | 136.9 ns | 135.1 ns | ≈ equal | ~1.0× |
 | `derive: write + read (depth 1)` | **366.4 ns** | 448.0 ns | 🟢 signals | 1.22× |
 | `effect: create + dispose` | **1.15 µs** | 1.37 µs | 🟢 signals | 1.19× |
 | `effect: dynamic deps (branch toggle)` | **728.8 ns** | 820.4 ns | 🟢 signals | 1.13× |
 | `effect: rerun with cleanup` | **476.2 ns** | 536.8 ns | 🟢 signals | 1.13× |
-| `graph: 20 src + 20 derive` | 22.84 µs | **22.52 µs** | ≈ equal | ~1.0× |
-| `mixed: 30 src, 60 derive, 15 effects` | **2.97 µs** | 3.09 µs | ≈ equal | ~1.0× |
+| `graph: 20 src + 20 derive` | 22.84 µs | 22.52 µs | ≈ equal | ~1.0× |
+| `mixed: 30 src, 60 derive, 15 effects` | 2.97 µs | 3.09 µs | ≈ equal | ~1.0× |
 | `source: create` | **116.8 ns** | 127.7 ns | 🟢 signals | 1.09× |
 | `source: read (untracked)` | **36.9 ns** | 40.9 ns | 🟢 signals | 1.11× |
 | `source: write, no subscribers` | **48.0 ns** | 53.8 ns | 🟢 signals | 1.12× |
