@@ -1,5 +1,7 @@
 std="luau"
 
+exclude = ["benchs/*"]
+
 [rules]
 multiple_statements = "allow"
 parenthese_conditions = "allow"
