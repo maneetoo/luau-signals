@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: 
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Format, lint, test
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tools with mise
+        uses: jdx/mise-action@v3
+        with:
+          install: true
+          cache: true
+
+      # mise's `github:` backend picks the wrong release asset for Selene
+      # (no executable found), so install it straight from the release,
+      # the same way release.yml installs Rojo and Wally.
+      - name: Install Selene
+        run: |
+          dest="$RUNNER_TEMP/selene"
+          mkdir -p "$dest"
+          gh release download --repo Kampfkarren/selene \
+            --pattern "selene-[0-9]*-linux.zip" --dir "$dest"
+          unzip -o "$dest"/*.zip -d "$dest"
+          chmod +x "$dest/selene"
+          echo "$dest" >> "$GITHUB_PATH"
+          "$dest/selene" --version
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+
+      - name: Lint
+        run: mise run lint
+
+      - name: Test
+        run: mise run test

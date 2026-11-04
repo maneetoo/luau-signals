@@ -1,0 +1,33 @@
+# luau-signals uses `mise-en-place` instead `rokit` due to its versatility, ecosystem, 
+# and advanced functionality for environment management
+# LPGhatguy in Foreman/#75 why `mise-en-place`: https://github.com/LPGhatguy/aftman/issues/75
+# doc: mise-en-place [https://mise.jdx.dev/configuration.html]
+# repository: rokit [https://github.com/rojo-rbx/rokit]
+
+[tools]
+"github:JohnnyMorganz/luau-lsp" = "latest"
+"github:Kampfkarren/selene" = "latest"
+"github:UpliftGames/wally" = "latest"
+"github:lune-org/lune" = "latest"
+"github:pesde-pkg/pesde" = "latest"
+"github:rojo-rbx/rojo" = "latest"
+luau = "latest"
+
+[tasks]
+
+[tasks.lint]
+description = "Lint .luau files via `Selene`"
+run = "selene ."
+
+[tasks.test]
+description = "Run the `tests/` suite via `Lune`"
+run = "lune run tests/run"
+
+[tasks.build]
+description = "Build .rbxlx file & run `lint`, `fmt-check`"
+depends = ["lint", "fmt-check"]
+run = "rojo build -o Slice.rbxlx"
+
+[tasks.serve]
+description = "Serve local server via `Rojo` to replecate `default.project.json`"
+run = "rojo serve"

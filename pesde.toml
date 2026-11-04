@@ -1,0 +1,21 @@
+name = "maneetoo/luau_signals"
+version = "0.1.0"
+description = "Luau Port of alien-signals 👾 the lightest signal library"
+authors = ["maneetoo"]
+repository = "https://github.com/maneetoo/luau-signals"
+license = "MIT"
+
+includes = [
+  "pesde.toml",
+  "README.md",
+  "LICENSE",
+  "src/**/*.luau",
+]
+
+[target]
+environment = "roblox"
+lib = "src/init.luau"
+build_files = ["src"]
+
+[indices]
+default = "https://github.com/pesde-pkg/index"

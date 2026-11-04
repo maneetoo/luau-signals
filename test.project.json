@@ -1,0 +1,14 @@
+{
+  "name": "luau-signals",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "luau-signals": {
+        "$path": "src/"
+      },
+      "__tests__": {
+        "$path": "tests/"
+      }
+    }
+  }
+}

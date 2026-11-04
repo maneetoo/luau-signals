@@ -1,0 +1,11 @@
+sourcemap.json
+/.lest
+docs/.vitepress/dist
+docs/.vitepress/cache
+docs/node_modules
+docs/package-lock.json
+server-packages/
+dev-packages/
+luau-packages/
+dist/
+*.lock

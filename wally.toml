@@ -1,0 +1,9 @@
+[package]
+name = "maneetoo/luau-signals"
+description = "Luau Port of alien-signals 👾 the lightest signal library"
+version = "0.1.0"
+license = "MIT"
+authors = ["maneetoo"]
+registry = "https://github.com/UpliftGames/wally-index"
+repository = "https://github.com/maneetoo/luau-signals"
+realm = "shared"
