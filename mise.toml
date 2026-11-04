@@ -36,3 +36,7 @@ run = "rojo build -o build.rbxlx"
 [tasks.serve]
 description = "Serve local server via `Rojo` to replecate `default.project.json`"
 run = "rojo serve"
+
+[tasks.serve-test]
+description = "Serve local server via `Rojo` to replecate `test.project.json`"
+run = "rojo serve test.project.json"

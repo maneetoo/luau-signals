@@ -8,4 +8,5 @@ server-packages/
 dev-packages/
 luau-packages/
 dist/
+benchs/Packages
 *.lock

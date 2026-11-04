@@ -8,6 +8,9 @@
       },
       "__tests__": {
         "$path": "tests/"
+      },
+      "__benchs__": {
+        "$path": "benchs/"
       }
     }
   }

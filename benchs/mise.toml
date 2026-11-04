@@ -1,0 +1,7 @@
+[tools]
+"github:UpliftGames/wally" = "latest"
+"github:rojo-rbx/rojo" = "latest"
+
+[tasks.serve]
+description = "Serve local server via `Rojo` to replecate `default.project.json`"
+run = "rojo serve"

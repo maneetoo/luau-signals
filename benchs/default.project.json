@@ -1,0 +1,9 @@
+{
+  "name": "__benchs__",
+  "tree": {
+    "$path": "src/",
+    "pkgs": {
+      "$path": "Packages/"
+    }
+  }
+}

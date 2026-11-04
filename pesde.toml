@@ -1,5 +1,5 @@
 name = "maneetoo/luau_signals"
-version = "0.1.0"
+version = "0.1.1"
 description = "Luau Port of alien-signals 👾 the lightest signal library"
 authors = ["maneetoo"]
 repository = "https://github.com/maneetoo/luau-signals"
