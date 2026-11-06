@@ -85,15 +85,14 @@ const WATCHING_RECURSED_MASK = bit32.bor(FLAG_WATCHING, FLAG_RECURSED);
 local cycle = 0;
 local runDepth = 0;
 local batchDepth = 0;
-local notifyIndex = 0;
-local queuedLength = 0;
+local notifyIndex = 1;
+local queuedLength = 1;
 --NOTE: `let activeSub: ReactiveNode | undefined` becomes `ReactiveNode?` initialised with `nil`: there is no `undefined` in 
 --Luau, only `nil`.
 local activeSub: ReactiveNode? = nil;
 
---NOTE: `queued` is the notify queue. In TS it is a plain array that grows from index 0 to `queuedLength`, every consumed 
---slot is set back to `undefined`, and the array is never shrunk (it is reused by the next flush) — the port does exactly 
---the same with `nil`, hence the `{ EffectNode? }` element type.
+-- The queue uses one-based indices so that all entries can use Luau's array part.
+-- queuedLength is the next insertion index, not the number of live entries.
 const queued: { EffectNode? } = {};
 
 --NOTE: The five functions returned by `createReactiveSystem` are used by almost everything below, but in Luau there is no 
@@ -295,7 +294,7 @@ end;
 
 --NOTE: `flush` is used by `signalOper`, `trigger` and `endBatch`, so it is defined before all three of them.
 const function flush(): ()
-    --NOTE: `try { while ... } finally { while ...; notifyIndex = 0; queuedLength = 0; }` (see `runCleanup`). The loop is 
+    --NOTE: `try { while ... } finally { while ...; reset queue cursors; }` (see `runCleanup`). The loop is 
     --wrapped in a `pcall`ed closure, so that an error thrown by an effect cannot leave the queue half-consumed: the 
     --`finally` part below drains the remaining effects and resets the cursors before the error is re-thrown.
     const flushQueue = function(): ()
@@ -317,8 +316,8 @@ const function flush(): ()
         --write notifies it again.
         effect.flags = bit32.bor(effect.flags, WATCHING_RECURSED_MASK);
     end;
-    notifyIndex = 0;
-    queuedLength = 0;
+    notifyIndex = 1;
+    queuedLength = 1;
     if (not ok) then
         error(err, 0);
     end;
