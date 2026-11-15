@@ -36,28 +36,28 @@ Currently, `Vide` is the most popular and frequently chosen reactivity library f
 
 | Scenario | `signals` | `vide` | Winner | Rupture |
 |:--|--:|--:|:--|--:|
-| `batch: 10 writes, batched` | 1.86 µs | 1.89 µs | ≈ equal | ~1.0× |
-| `batch: 10 writes, no batch` | **10.2 µs** | 12.0 µs | 🟢 signals | 1.17× |
-| `derive: 1 src → 50 derives → 1 effect` | **12.4 µs** | 17.3 µs | 🟢 signals | **1.39×** |
-| `derive: chain depth 10` | **2.36 µs** | 2.53 µs | 🟢 signals | 1.07× |
-| `derive: chain depth 10 → effect` | **2.41 µs** | 2.60 µs | 🟢 signals | 1.08× |
-| `derive: chain depth 40` | **7.79 µs** | 9.50 µs | 🟢 signals | 1.22× |
-| `derive: cutoff (value unchanged)` | 529 ns | **308 ns** | 🔴 vide | **1.72×*** |
-| `derive: diamond → effect` | 1.17 µs | 1.11 µs | ≈ equal | ~1.0× |
-| `derive: unobserved (lazy vs eager)` | **137 ns** | 2.44 µs | 🟢 signals | **17.83×** |
-| `derive: write + read (depth 1)` | 377 ns | 371 ns | ≈ equal | ~1.0× |
+| `batch: 10 writes, batched` | 2.15 µs | 2.1 µs | ≈ equal | ~1.0× |
+| `batch: 10 writes, no batch` | **11.8 µs** | 14.7 µs | 🟢 signals | 1.24× |
+| `derive: 1 src → 50 derives → 1 effect` | **13.4 µs** | 20.6 µs | 🟢 signals | **1.54×** |
+| `derive: chain depth 10` | **2.48 µs** | 3.03 µs | 🟢 signals | 1.22× |
+| `derive: chain depth 10 → effect` | 2.8 µs | 2.9 µs | ≈ equal | ~1.0× |
+| `derive: chain depth 40` | **9.11 µs** | 11.6 µs | 🟢 signals | 1.27× |
+| `derive: cutoff (value unchanged)` | 560 ns | **381 ns** | 🔴 vide | **1.47×*** |
+| `derive: diamond → effect` | 1.22 µs | 1.28 µs | ≈ equal | ~1.0× |
+| `derive: unobserved (lazy vs eager)` | **141 ns** | 2.56 µs | 🟢 signals | **18.18×** |
+| `derive: write + read (depth 1)` | 452 ns | 437 ns | ≈ equal | ~1.0× |
 | `effect: create + dispose` | 1.14 µs | 1.11 µs | ≈ equal | ~1.0× |
-| `effect: dynamic deps (branch toggle)` | 681 ns | **421 ns** | 🔴 vide | **1.62×*** |
-| `effect: rerun with cleanup` | 465 ns | 453 ns | ≈ equal | ~1.0× |
-| `graph: 20 src + 20 derive` | **18.8 µs** | 21.2 µs | 🟢 signals | 1.12× |
-| `mixed: 30 src, 60 derive, 15 effects` | **2.68 µs** | 9.90 µs | 🟢 signals | **3.69×** |
-| `source: create` | 110 ns | 106 ns | ≈ equal | ~1.0× |
-| `source: read (untracked)` | **37 ns** | 56 ns | 🟢 signals | **1.52×** |
-| `source: write, no subscribers` | **46 ns** | 81 ns | 🟢 signals | **1.76×** |
-| `source: write, same value` | 37 ns | 39 ns | ≈ equal | ~1.0× |
-| `write → 1 effect` | 419 ns | **317 ns** | 🔴 vide | **1.32×*** |
-| `write → 10 effects` | **2.21 µs** | 2.62 µs | 🟢 signals | 1.18× |
-| `write → 100 effects` | **18.9 µs** | 25.2 µs | 🟢 signals | **1.34×** |
+| `effect: dynamic deps (branch toggle)` | 708 ns | **515 ns** | 🔴 vide | **1.37×*** |
+| `effect: rerun with cleanup` | 502 ns | 502 ns | ≈ equal | ~1.0× |
+| `graph: 20 src + 20 derive` | **18.8 µs** | 21.9 µs | 🟢 signals | 1.17× |
+| `mixed: 30 src, 60 derive, 15 effects` | **2.73 µs** | 11 µs | 🟢 signals | **4.04×** |
+| `source: create` | 106 ns | **100 ns** | 🔴 vide | 1.06×* |
+| `source: read (untracked)` | **39 ns** | 59 ns | 🟢 signals | **1.52×** |
+| `source: write, no subscribers` | **53 ns** | 86 ns | 🟢 signals | **1.63×** |
+| `source: write, same value` | 40 ns | 41 ns | ≈ equal | ~1.0× |
+| `write → 1 effect` | 409 ns | **316 ns** | 🔴 vide | 1.30×* |
+| `write → 10 effects` | **2.26 µs** | 3.24 µs | 🟢 signals | **1.43×** |
+| `write → 100 effects` | **18.3 µs** | 24.4 µs | 🟢 signals | **1.33×** |
 
 `*` - Scenarios where Vide excels - essentially its "natural habitat" - are those involving a single action (e.g. write operation resulting in one effect) or situations where nothing changes following an update. In such cases, its "eager" update model incurs lower computational overhead. For larger-scale tasks, `luau-signals` is a better choice.
 </details>
@@ -67,28 +67,28 @@ Currently, `Vide` is the most popular and frequently chosen reactivity library f
 
 | Scenario | `signals` | `fluid` | Winner | Rupture |
 |:--|--:|--:|:--|--:|
-| `batch: 10 writes, batched` | **2.07 µs** | 54.92 µs | 🟢 signals | **26.53×** |
-| `batch: 10 writes, no batch` | **12.09 µs** | 56.54 µs | 🟢 signals | **4.68×** |
-| `derive: 1 src → 50 derives → 1 effect` | **13.79 µs** | 636.90 µs | 🟢 signals | **46.19×** |
-| `derive: chain depth 10` | **2.58 µs** | 10.72 µs | 🟢 signals | **4.15×** |
-| `derive: chain depth 10 → effect` | **2.65 µs** | 11.46 µs | 🟢 signals | **4.32×** |
-| `derive: chain depth 40` | **8.93 µs** | 39.75 µs | 🟢 signals | **4.45×** |
-| `derive: cutoff (value unchanged)` | **627.8 ns** | 1.75 µs | 🟢 signals | **2.79×** |
-| `derive: diamond → effect` | **1.21 µs** | 4.81 µs | 🟢 signals | **3.98×** |
-| `derive: unobserved (lazy vs eager)` | **145.0 ns** | 386.7 ns | 🟢 signals | **2.67×** |
-| `derive: write + read (depth 1)` | **424.0 ns** | 1.42 µs | 🟢 signals | **3.35×** |
-| `effect: create + dispose` | **1.25 µs** | 2.84 µs | 🟢 signals | **2.27×** |
-| `effect: dynamic deps (branch toggle)` | **774.7 ns** | 2.19 µs | 🟢 signals | **2.83×** |
-| `effect: rerun with cleanup` | **526.5 ns** | 1.91 µs | 🟢 signals | **3.63×** |
-| `graph: 20 src + 20 derive` | **23.13 µs** | 45.53 µs | 🟢 signals | **1.97×** |
-| `mixed: 30 src, 60 derive, 15 effects` | **3.09 µs** | 10.66 µs | 🟢 signals | **3.45×** |
-| `source: create` | **121.4 ns** | 254.3 ns | 🟢 signals | **2.10×** |
-| `source: read (untracked)` | **41.8 ns** | 82.4 ns | 🟢 signals | **1.97×** |
-| `source: write, no subscribers` | **51.8 ns** | 166.4 ns | 🟢 signals | **3.21×** |
-| `source: write, same value (no-op)` | **41.6 ns** | 81.1 ns | 🟢 signals | **1.95×** |
-| `write → 1 effect` | **477.7 ns** | 1.51 µs | 🟢 signals | **3.16×** |
-| `write → 10 effects` | **2.36 µs** | 14.08 µs | 🟢 signals | **5.97×** |
-| `write → 100 effects` | **20.16 µs** | 136.33 µs | 🟢 signals | **6.76×** |
+| `batch: 10 writes, batched` | **2.15 µs** | 53.31 µs | 🟢 signals | **24.80×** |
+| `batch: 10 writes, no batch` | **11.81 µs** | 54.46 µs | 🟢 signals | **4.61×** |
+| `derive: 1 src → 50 derives → 1 effect` | **13.40 µs** | 574.68 µs | 🟢 signals | **42.89×** |
+| `derive: chain depth 10` | **2.48 µs** | 8.52 µs | 🟢 signals | **3.44×** |
+| `derive: chain depth 10 → effect` | **2.80 µs** | 11.26 µs | 🟢 signals | **4.02×** |
+| `derive: chain depth 40` | **9.11 µs** | 36.91 µs | 🟢 signals | **4.05×** |
+| `derive: cutoff (value unchanged)` | **560.2 ns** | 1.56 µs | 🟢 signals | **2.78×** |
+| `derive: diamond → effect` | **1.22 µs** | 4.54 µs | 🟢 signals | **3.72×** |
+| `derive: unobserved (lazy vs eager)` | **140.8 ns** | 294.8 ns | 🟢 signals | **2.09×** |
+| `derive: write + read (depth 1)` | **451.7 ns** | 1.27 µs | 🟢 signals | **2.81×** |
+| `effect: create + dispose` | **1.14 µs** | 2.37 µs | 🟢 signals | **2.08×** |
+| `effect: dynamic deps (branch toggle)` | **707.5 ns** | 1.77 µs | 🟢 signals | **2.50×** |
+| `effect: rerun with cleanup` | **501.8 ns** | 1.53 µs | 🟢 signals | **3.05×** |
+| `graph: 20 src + 20 derive` | **18.77 µs** | 43.14 µs | 🟢 signals | **2.30×** |
+| `mixed: 30 src, 60 derive, 15 effects` | **2.73 µs** | 13.03 µs | 🟢 signals | **4.77×** |
+| `source: create` | **105.8 ns** | 208.1 ns | 🟢 signals | **1.97×** |
+| `source: read (untracked)` | **38.8 ns** | 74.2 ns | 🟢 signals | **1.91×** |
+| `source: write, no subscribers` | **52.6 ns** | 137.6 ns | 🟢 signals | **2.62×** |
+| `source: write, same value (no-op)` | **40.1 ns** | 71.1 ns | 🟢 signals | **1.77×** |
+| `write → 1 effect` | **409.4 ns** | 1.24 µs | 🟢 signals | **3.03×** |
+| `write → 10 effects` | **2.26 µs** | 11.65 µs | 🟢 signals | **5.15×** |
+| `write → 100 effects` | **18.34 µs** | 115.79 µs | 🟢 signals | **6.31×** |
 </details>
 
 <details>
@@ -96,30 +96,30 @@ Currently, `Vide` is the most popular and frequently chosen reactivity library f
 
 | Scenario | `signals` | `flux` | Winner | Rupture |
 |:--|--:|--:|:--|--:|
-| `batch: 10 writes, batched` | **2.10 µs** | 2.22 µs | 🟢 signals | 1.06× |
-| `batch: 10 writes, no batch` | **11.38 µs** | 12.38 µs | 🟢 signals | 1.09× |
-| `derive: 1 src → 50 derives → 1 effect` | **13.59 µs** | 15.03 µs | 🟢 signals | 1.11× |
-| `derive: chain depth 10` | **2.30 µs** | 3.01 µs | 🟢 signals | **1.31×** |
-| `derive: chain depth 10 → effect` | **2.43 µs** | 2.85 µs | 🟢 signals | 1.17× |
-| `derive: chain depth 40` | **7.78 µs** | 8.52 µs | 🟢 signals | 1.10× |
-| `derive: cutoff (value unchanged)` | **602.9 ns** | 678.0 ns | 🟢 signals | 1.12× |
-| `derive: diamond → effect` | **1.12 µs** | 1.34 µs | 🟢 signals | 1.20× |
-| `derive: unobserved (lazy vs eager)` | 136.9 ns | 135.1 ns | ≈ equal | ~1.0× |
-| `derive: write + read (depth 1)` | **366.4 ns** | 448.0 ns | 🟢 signals | 1.22× |
-| `effect: create + dispose` | **1.15 µs** | 1.37 µs | 🟢 signals | 1.19× |
-| `effect: dynamic deps (branch toggle)` | **728.8 ns** | 820.4 ns | 🟢 signals | 1.13× |
-| `effect: rerun with cleanup` | **476.2 ns** | 536.8 ns | 🟢 signals | 1.13× |
-| `graph: 20 src + 20 derive` | 22.84 µs | 22.52 µs | ≈ equal | ~1.0× |
-| `mixed: 30 src, 60 derive, 15 effects` | 2.97 µs | 3.09 µs | ≈ equal | ~1.0× |
-| `source: create` | **116.8 ns** | 127.7 ns | 🟢 signals | 1.09× |
-| `source: read (untracked)` | **36.9 ns** | 40.9 ns | 🟢 signals | 1.11× |
-| `source: write, no subscribers` | **48.0 ns** | 53.8 ns | 🟢 signals | 1.12× |
-| `source: write, same value (no-op)` | **39.1 ns** | 41.8 ns | 🟢 signals | 1.07× |
-| `write → 1 effect` | **420.0 ns** | 499.1 ns | 🟢 signals | 1.19× |
-| `write → 10 effects` | **2.20 µs** | 2.43 µs | 🟢 signals | 1.10× |
-| `write → 100 effects` | **18.57 µs** | 20.69 µs | 🟢 signals | 1.11× |
+| `batch: 10 writes, batched` | 2.15 µs | **1.86 µs** | 🔴 flux | 1.16× |
+| `batch: 10 writes, no batch` | 11.81 µs | **10.42 µs** | 🔴 flux | 1.13× |
+| `derive: 1 src → 50 derives → 1 effect` | 13.40 µs | **12.48 µs** | 🔴 flux | 1.07× |
+| `derive: chain depth 10` | 2.48 µs | **2.27 µs** | 🔴 flux | 1.09× |
+| `derive: chain depth 10 → effect` | **2.80 µs** | 3.06 µs | 🟢 signals | 1.09× |
+| `derive: chain depth 40` | 9.11 µs | 8.75 µs | ≈ equal | ~1.0× |
+| `derive: cutoff (value unchanged)` | 560.2 ns | 544.1 ns | ≈ equal | ~1.0× |
+| `derive: diamond → effect` | 1.22 µs | **1.12 µs** | 🔴 flux | 1.09× |
+| `derive: unobserved (lazy vs eager)` | **140.8 ns** | 168.8 ns | 🟢 signals | 1.20× |
+| `derive: write + read (depth 1)` | 451.7 ns | **406.1 ns** | 🔴 flux | 1.11× |
+| `effect: create + dispose` | **1.14 µs** | 1.27 µs | 🟢 signals | 1.11× |
+| `effect: dynamic deps (branch toggle)` | **707.5 ns** | 922.9 ns | 🟢 signals | **1.30×** |
+| `effect: rerun with cleanup` | 501.8 ns | **471.0 ns** | 🔴 flux | 1.07× |
+| `graph: 20 src + 20 derive` | 18.77 µs | **17.58 µs** | 🔴 flux | 1.07× |
+| `mixed: 30 src, 60 derive, 15 effects` | **2.73 µs** | 2.87 µs | 🟢 signals | 1.05× |
+| `source: create` | 105.8 ns | 101.7 ns | ≈ equal | ~1.0× |
+| `source: read (untracked)` | **38.8 ns** | 41.3 ns | 🟢 signals | 1.06× |
+| `source: write, no subscribers` | 52.6 ns | 52.1 ns | ≈ equal | ~1.0× |
+| `source: write, same value (no-op)` | 40.1 ns | 41.2 ns | ≈ equal | ~1.0× |
+| `write → 1 effect` | **409.4 ns** | 455.2 ns | 🟢 signals | 1.11× |
+| `write → 10 effects` | **2.26 µs** | 2.38 µs | 🟢 signals | 1.05× |
+| `write → 100 effects` | **18.34 µs** | 19.49 µs | 🟢 signals | 1.06× |
 
-`flux` is close to `signals` — within 1.1–1.3× on almost every scenario, unlike `fluid` (2–46× slower). The one clear gap is `derive: chain depth 10` at 1.31×; `unobserved`, `graph`, and `mixed` are within noise. This suggests `flux` also uses a lazy push-pull model with similar overhead; the difference is likely in constant factors (`getmetatable` vs internal tags, closure handling, queue flush strategy) rather than architecture.
+`flux` is close to `signals` — within 1.05–1.3× on every scenario, unlike `fluid` (2–43× slower). In this run `signals` is ahead in 9 scenarios, `flux` in 8, and 5 are within noise. The largest gaps are `effect: dynamic deps (branch toggle)` (1.30× in favour of `signals`) and `batch: 10 writes, batched` (1.16× in favour of `flux`). This suggests `flux` also uses a lazy push-pull model with similar overhead; the difference is likely in constant factors (`getmetatable` vs internal tags, closure handling, queue flush strategy) rather than architecture.
 </details>
 
 
