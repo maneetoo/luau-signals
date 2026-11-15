@@ -257,6 +257,12 @@ const function updateComputed(c: ComputedNode): boolean
     cycle += 1;
     const oldValue = c.value;
     const ok, result = pcall(c.getter, oldValue);
+    --NOTE: in TS the assignment `c.value = c.getter(oldValue)` happens inside the `try`, i.e. *before* the `finally` block,
+    --so if `purgeDeps` throws (a child effect's cleanup runs from there), `c.value` already holds the new value. The
+    --assignment is therefore done here, before the `finally` part, and only when the getter returned normally.
+    if (ok) then
+        c.value = result;
+    end;
     -- finally
     activeSub = prevSub;
     c.flags = bit32.band(c.flags, CLEAR_RECURSED_CHECK_FLAG);
@@ -264,7 +270,6 @@ const function updateComputed(c: ComputedNode): boolean
     if (not ok) then
         error(result, 0);
     end;
-    c.value = result;
     return oldValue ~= result;
 end;
 
@@ -308,6 +313,11 @@ const function run(e: EffectNode): ()
         cycle += 1;
         runDepth += 1;
         const ok, cleanup = pcall(e.fn :: Thunk);
+        --NOTE: as in `updateComputed`: in TS `e.cleanup = e.fn()` is inside the `try`, so it is already stored when
+        --`purgeDeps` (in the `finally`) runs and possibly throws.
+        if (ok) then
+            e.cleanup = cleanup :: Cleanup?;
+        end;
         -- finally
         runDepth -= 1;
         activeSub = prevSub;
@@ -316,7 +326,6 @@ const function run(e: EffectNode): ()
         if (not ok) then
             error(cleanup, 0);
         end;
-        e.cleanup = cleanup :: Cleanup?;
     elseif (e.deps ~= nil) then
         e.flags = bit32.bor(FLAG_WATCHING, bit32.band(flags, HasChildEffect));
     end;
