@@ -2,7 +2,7 @@
   "name": "luau-signals",
   "tree": {
     "$className": "DataModel",
-    "ReplicatedStorage": {
+    "ServerScriptService": {
       "luau-signals": {
         "$path": "src/"
       },
