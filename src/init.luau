@@ -251,8 +251,11 @@ const function updateComputed(c: ComputedNode): boolean
     end;
     c.depsTail = nil;
     c.flags = MUTABLE_RECURSED_CHECK_MASK;
-    const prevSub = setActiveSub(c);
-    --NOTE: this is the `try { ... } finally { ... }` of the original (see `runCleanup`). The value of the computed is 
+    --NOTE: perf: `setActiveSub(c)` is written out by hand here, in `computedOper` and in `run` (the hot paths), so that no
+    --call is made even if the compiler does not inline it.
+    const prevSub = activeSub;
+    activeSub = c;
+    --NOTE: this is the `try { ... } finally { ... }` of the original (see `runCleanup`). The value of the computed is
     --assigned only after the getter has returned, exactly as in TS, where an exception aborts the assignment.
     cycle += 1;
     const oldValue = c.value;
@@ -308,7 +311,8 @@ const function run(e: EffectNode): ()
         end;
         e.depsTail = nil;
         e.flags = WATCHING_RECURSED_CHECK_MASK;
-        const prevSub = setActiveSub(e);
+        const prevSub = activeSub;
+        activeSub = e;
         --NOTE: `try { ++cycle; ++runDepth; e.cleanup = e.fn(); } finally { ... }` (see `runCleanup`).
         cycle += 1;
         runDepth += 1;
@@ -350,6 +354,13 @@ const function flush(): ()
     --wrapped in a `pcall`ed function (`flushQueue`), so that an error thrown by an effect cannot leave the queue
     --half-consumed: the `finally` part below drains the remaining effects and resets the cursors before the error is
     --re-thrown.
+    --NOTE: perf: nothing is queued when the written signal is only watched by computeds (no effect was notified), and in
+    --that case the `pcall` and the cursor reset below would be pure overhead. The cursors are left as they are: they are
+    --equal here, and every later `notify` inserts at `queuedLength`, while the outermost `flush` that actually consumed
+    --something still resets them to `1` in its own `finally` part.
+    if (notifyIndex >= queuedLength) then
+        return;
+    end;
     const ok, err = pcall(flushQueue :: Thunk);
     -- finally
     while (notifyIndex < queuedLength) do
@@ -441,7 +452,8 @@ const function computedOper(c: ComputedNode): any
         --NOTE: the very first read of a computed: it has no deps and no flags, so it is evaluated directly, without going 
         --through `updateComputed` (which is only for an already-tracked node).
         c.flags = MUTABLE_RECURSED_CHECK_MASK;
-        const prevSub = setActiveSub(c);
+        const prevSub = activeSub;
+        activeSub = c;
         --NOTE: `try { this.value = this.getter(); } finally { ... }` (see `runCleanup`). Note that the getter is called 
         --without an argument here — the previous value is passed only by `updateComputed`.
         const ok, value = pcall(c.getter);
