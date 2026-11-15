@@ -7,7 +7,7 @@
 const system = require '@self/system';
 const createReactiveSystem = system.createReactiveSystem;
 
-type ReactiveNode = system.ReactiveNode;
+export type ReactiveNode = system.ReactiveNode;
 type Link = system.Link;
 
 --NOTE: In TS, `interface EffectScopeNode extends ReactiveNode {}` adds nothing to the base node, so in Luau it is just an 
@@ -21,24 +21,49 @@ type EffectScopeNode = ReactiveNode;
 --a function to return a value of the declared return type, so a single `() -> Cleanup?` would reject the most common form 
 --`effect(function() ... end)` (a function without a `return` statement is typed `() -> ()`, and `()` is not `Cleanup?`).
 type Cleanup = () -> ();
-type EffectFn = (() -> ()) | (() -> Cleanup?);
+export type EffectFn = (() -> ()) | (() -> Cleanup?);
 
 type EffectNode = ReactiveNode & {
     fn: EffectFn;
     cleanup: Cleanup?;
 };
 
---NOTE: The TS interfaces are generic (`ComputedNode<T>`, `SignalNode<T>`). Luau supports generics, but a signal/computed is a 
---callable table (see `SIGNAL_META` below) and Luau's type system cannot describe a callable table at all, so the value 
---handed back to the user is `any` and the stored value is `any` too — exactly what `<T = any>` means in the original.
-type ComputedNode = ReactiveNode & {
-    value: any;
-    getter: (previousValue: any) -> any;
+--NOTE: The internal nodes are generic over the stored value, with `any` as the default — exactly what `<T = any>` means in 
+--the original. The internals of this module never need a concrete `T` (they handle every node as `any`-valued, and a `nil` 
+--value is legal for both a signal and a computed), so they are always used with the default, and the concrete `T` only 
+--appears in the *public* types below (`Signal<T>`, `Computed<T>`), where it is attached with a cast at the API boundary.
+type ComputedNode<T = any> = ReactiveNode & {
+    value: T;
+    getter: (previousValue: any) -> T;
 };
 
-type SignalNode = ReactiveNode & {
-    currentValue: any;
-    pendingValue: any;
+type SignalNode<T = any> = ReactiveNode & {
+    currentValue: T;
+    pendingValue: T;
+};
+
+--NOTE: A signal/computed/effect is a callable table (see `SIGNAL_META` below), and Luau's type system cannot describe a 
+--callable table. The value handed back to the user is therefore *typed as the function it behaves like* — the same trick as 
+--for `signalOper.bind(node)` in the original, which is a plain function. The node is cast to that function type exactly 
+--once, at the creation site (`signal`/`computed`/`effect`/`effectScope`).
+--NOTE: `Signal<T>` is an *intersection* of two function types, which is how Luau spells an overloaded function: it is the 
+--direct equivalent of the pair of overloads of `signalOper` in TS — `() => T` reads, `(value: T) => void` writes. Only the 
+--call syntax is described: the node must not be used as a table (`next`, `pairs`, field access) by the caller.
+export type Signal<T> = (() -> T) & ((value: T) -> ());
+export type Computed<T> = () -> T;
+--NOTE: shared by `effect` and `effectScope`: in TS both return `() => void` (the bound `effectOper`/`effectScopeOper`).
+export type Disposer = () -> ();
+
+--NOTE: TS overloads `signal<T>()` and `signal<T>(initialValue: T)`. Luau has no function overloads, but an intersection of 
+--generic function types gives the same thing: the zero-argument form can only produce a `Signal<T?>` (the value starts as 
+--`nil`), while the form with an argument infers `T` from it and gives a `Signal<T>`.
+type SignalFactory = (<T>() -> Signal<T?>) & (<T>(initialValue: T) -> Signal<T>);
+
+--NOTE: the shape of the four node metatables below. Only `__call` is ever set. It is typed `any` because the four handlers 
+--have different signatures (`signalOper` is variadic, `computedOper` and `effectScopeOper` are not, and `effectScopeOper` 
+--returns nothing), and none of them can be assigned to a single function type without lying about one of them.
+type NodeMeta = {
+    __call: any;
 };
 
 --NOTE: Luau has no `try`/`catch`/`finally`, so every `finally` block of the original is reproduced with `pcall` and a 
@@ -109,12 +134,13 @@ local shallowPropagate: (link: Link) -> ();
 --NOTE: the four node metatables are forward-declared for the same reason, and the cycle is even tighter: the operations 
 --below identify the node kind by its metatable (see `SIGNAL_META`), while each metatable needs the operation it wraps as 
 --its `__call` handler. They are created once, right after the last of those operations.
---NOTE: they are typed `any` (a metatable that makes a table callable has no type in Luau) and they are frozen, so neither 
---the `__call` handler of a kind nor the identity of a metatable can be replaced from the outside once the module is loaded.
-local SIGNAL_META: any;
-local COMPUTED_META: any;
-local EFFECT_SCOPE_META: any;
-local EFFECT_META: any;
+--NOTE: they are typed `NodeMeta` (a metatable that makes a table callable has no precise type in Luau, see above) and they 
+--are frozen, so neither the `__call` handler of a kind nor the identity of a metatable can be replaced from the outside 
+--once the module is loaded.
+local SIGNAL_META: NodeMeta;
+local COMPUTED_META: NodeMeta;
+local EFFECT_SCOPE_META: NodeMeta;
+local EFFECT_META: NodeMeta;
 
 --NOTE: `setActiveSub` and `getActiveSub` are placed here (instead of with the rest of the public API at the bottom) because 
 --the first function that uses them is defined below, and in Luau `const function` must be defined before it is referenced.
@@ -542,34 +568,35 @@ const function endBatch(): ()
     end;
 end;
 
---NOTE: the argument is typed `any` rather than `() -> void`: a signal is a callable table, which Luau's type system cannot 
---express. The `type(value) == "table"` guard is there because `getmetatable` is only meaningful for tables (strings share a 
---metatable, for instance, and must not be mistaken for a node).
+--NOTE: the argument is typed `unknown` (TS: `fn: () => void`, but the guard below makes any value acceptable): the check is 
+--only meaningful for tables, and `unknown` forces the `type(value) == "table"` guard to be the thing that narrows it, so 
+--the function cannot be broken by a later edit that drops the guard. The guard is there because `getmetatable` is only 
+--meaningful for tables (strings share a metatable, for instance, and must not be mistaken for a node).
 --NOTE: this is also the one place where the port is deliberately more forgiving than the original: `isSignal(undefined)` 
 --throws in TS (it reads `fn.name`), while here an argument of the wrong type simply gives `false`.
-const function isSignal(value: any): boolean
+const function isSignal(value: unknown): boolean
     return type(value) == "table" and getmetatable(value) == SIGNAL_META;
 end;
 
-const function isComputed(value: any): boolean
+const function isComputed(value: unknown): boolean
     return type(value) == "table" and getmetatable(value) == COMPUTED_META;
 end;
 
-const function isEffect(value: any): boolean
+const function isEffect(value: unknown): boolean
     return type(value) == "table" and getmetatable(value) == EFFECT_META;
 end;
 
-const function isEffectScope(value: any): boolean
+const function isEffectScope(value: unknown): boolean
     return type(value) == "table" and getmetatable(value) == EFFECT_SCOPE_META;
 end;
 
 --NOTE: TS declares `signal` with a pair of overloads (`signal<T>()` and `signal<T>(initialValue: T)`) and returns a bound 
---`signalOper`. Luau has no overloads and no callable-table type, so the function is a single `any -> any`: the parameter is 
---declared `any?` to keep the zero-argument form `signal()` legal (the value then simply starts as `nil`), and the get/set 
---distinction is made by `signalOper` from the number of arguments.
+--`signalOper`. The implementation is a single `any? -> any` (the parameter is `any?` to keep the zero-argument form legal: 
+--the value then simply starts as `nil`, and the get/set distinction is made by `signalOper` from the number of arguments), 
+--and it is exposed as `signal` below under the `SignalFactory` type, which restores the two overloads.
 --NOTE: every field of the node — including the `nil`s — is written explicitly, so that the hash part is allocated once and 
 --`link`/`unlink` never cause the table to be rehashed (the same reasoning as in `system.luau`'s `link`).
-const function signal(initialValue: any?): any
+const function createSignal(initialValue: any?): any
     const s: SignalNode = {
         deps = nil,
         depsTail = nil,
@@ -588,10 +615,15 @@ const function signal(initialValue: any?): any
     return s;
 end;
 
---NOTE: `computed<T>(getter: (previousValue?: T) => T)` becomes `(previousValue: any) -> any` for the same reason as above. 
---The node starts with `ReactiveFlags.None` — no flags at all mean "never evaluated yet", which is exactly what 
---`computedOper` checks for.
-const function computed(getter: (previousValue: any) -> any): any
+--NOTE: the cast goes through `any` because a function cannot be cast directly to an intersection of generic function types.
+const signal: SignalFactory = createSignal :: any;
+
+--NOTE: `computed<T>(getter: (previousValue?: T) => T)` keeps its generic here: the getter is typed `(T?) -> T` and the 
+--result `Computed<T>`, which is what lets `computed(function() return 1 end)` be inferred as `Computed<number>`. The node 
+--itself is stored `any`-valued (see `ComputedNode`), so the node is cast to `any` on return — the cast is where the node 
+--becomes the function it behaves like. The node starts with `ReactiveFlags.None` — no flags at all mean "never evaluated 
+--yet", which is exactly what `computedOper` checks for.
+const function computed<T>(getter: (previousValue: T?) -> T): Computed<T>
     const c: ComputedNode = {
         deps = nil,
         depsTail = nil,
@@ -601,9 +633,9 @@ const function computed(getter: (previousValue: any) -> any): any
         value = nil,
         getter = getter,
     };
-    --NOTE: see `signal` for why `setmetatable` is a separate statement and why the node is cast to `any`.
+    --NOTE: see `createSignal` for why `setmetatable` is a separate statement and why the node is cast to `any`.
     setmetatable(c :: any, COMPUTED_META);
-    return c;
+    return c :: any;
 end;
 
 --NOTE: `effect(fn)` returns `effectOper.bind(e)` in the original, i.e. a disposer. Here the effect node itself is the 
@@ -612,7 +644,7 @@ end;
 --NOTE: `try { ++runDepth; e.cleanup = e.fn(); } finally { --runDepth; activeSub = prevSub; e.flags &= ~RecursedCheck; }` 
 --— see `runCleanup`. The cleanup is stored only if the callback returned normally, exactly as in the original, where the 
 --exception aborts the assignment.
-const function effect(fn: EffectFn): any
+const function effect(fn: EffectFn): Disposer
     const e: EffectNode = {
         deps = nil,
         depsTail = nil,
@@ -622,7 +654,7 @@ const function effect(fn: EffectFn): any
         fn = fn,
         cleanup = nil,
     };
-    --NOTE: see `signal` for why `setmetatable` is a separate statement and why the node is cast to `any`.
+    --NOTE: see `createSignal` for why `setmetatable` is a separate statement and why the node is cast to `any`.
     setmetatable(e :: any, EFFECT_META);
     const prevSub = setActiveSub(e);
     if (prevSub ~= nil) then
@@ -640,11 +672,11 @@ const function effect(fn: EffectFn): any
         error(cleanup, 0);
     end;
     e.cleanup = cleanup :: Cleanup?;
-    return e;
+    return e :: any;
 end;
 
 --NOTE: as with `effect`, the disposer is the node itself, so the node gets its metatable at creation time.
-const function effectScope(fn: () -> ()): any
+const function effectScope(fn: () -> ()): Disposer
     const e: EffectScopeNode = {
         deps = nil,
         depsTail = nil,
@@ -652,7 +684,7 @@ const function effectScope(fn: () -> ()): any
         subsTail = nil,
         flags = FLAG_MUTABLE,
     };
-    --NOTE: see `signal` for why `setmetatable` is a separate statement and why the node is cast to `any`.
+    --NOTE: see `createSignal` for why `setmetatable` is a separate statement and why the node is cast to `any`.
     setmetatable(e :: any, EFFECT_SCOPE_META);
     const prevSub = setActiveSub(e);
     if (prevSub ~= nil) then
@@ -666,7 +698,7 @@ const function effectScope(fn: () -> ()): any
     if (not ok) then
         error(err, 0);
     end;
-    return e;
+    return e :: any;
 end;
 
 --NOTE: `trigger` is the "write without a signal" primitive: everything that is read inside `fn` is tracked by a throw-away 
