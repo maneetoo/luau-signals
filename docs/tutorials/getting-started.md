@@ -15,7 +15,7 @@ Add the package to your `wally.toml`:
 
 ```toml
 [dependencies]
-LuauSignals = "manee/luau-signals@0.1.0"
+LuauSignals = "manee/luau-signals@0.2.0"
 ```
 
 ::: tip
@@ -28,7 +28,7 @@ Add the package to your `pesde.toml`:
 
 ```toml
 [dependencies]
-luausignals = { name = "maneetoo/luau_signals", version = "^0.1.0" }
+luausignals = { name = "maneetoo/luau_signals", version = "^0.2.0" }
 ```
 
 ::: tip
