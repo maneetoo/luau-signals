@@ -643,12 +643,12 @@ const signal: SignalFactory = createSignal :: any;
 --yet", which is exactly what `computedOper` checks for.
 const function computed<T>(getter: (previousValue: T?) -> T): Computed<T>
     const c: ComputedNode = {
-        deps = nil,
-        depsTail = nil,
+        value = nil,
         subs = nil,
         subsTail = nil,
+        deps = nil,
+        depsTail = nil,
         flags = FLAG_NONE,
-        value = nil,
         getter = getter,
     };
     --NOTE: see `createSignal` for why `setmetatable` is a separate statement and why the node is cast to `any`.
