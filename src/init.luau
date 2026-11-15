@@ -318,20 +318,25 @@ const function run(e: EffectNode): ()
     end;
 end;
 
+--NOTE: perf: the body of the `pcall`ed loop of `flush` is a module-level function instead of a closure created inside
+--`flush`. It only touches module-level upvalues, so nothing changes semantically, but a closure is no longer allocated on
+--every flush (i.e. on every write to a signal that has subscribers).
+const function flushQueue(): ()
+    while (notifyIndex < queuedLength) do
+        --NOTE: TS uses the non-null assertion `queued[notifyIndex]!`; in Luau the same thing is expressed with a cast.
+        const effect = queued[notifyIndex] :: EffectNode;
+        queued[notifyIndex] = nil;
+        notifyIndex += 1;
+        run(effect);
+    end;
+end;
+
 --NOTE: `flush` is used by `signalOper`, `trigger` and `endBatch`, so it is defined before all three of them.
 const function flush(): ()
-    --NOTE: `try { while ... } finally { while ...; reset queue cursors; }` (see `runCleanup`). The loop is 
-    --wrapped in a `pcall`ed closure, so that an error thrown by an effect cannot leave the queue half-consumed: the 
-    --`finally` part below drains the remaining effects and resets the cursors before the error is re-thrown.
-    const flushQueue = function(): ()
-        while (notifyIndex < queuedLength) do
-            --NOTE: TS uses the non-null assertion `queued[notifyIndex]!`; in Luau the same thing is expressed with a cast.
-            const effect = queued[notifyIndex] :: EffectNode;
-            queued[notifyIndex] = nil;
-            notifyIndex += 1;
-            run(effect);
-        end;
-    end;
+    --NOTE: `try { while ... } finally { while ...; reset queue cursors; }` (see `runCleanup`). The loop is
+    --wrapped in a `pcall`ed function (`flushQueue`), so that an error thrown by an effect cannot leave the queue
+    --half-consumed: the `finally` part below drains the remaining effects and resets the cursors before the error is
+    --re-thrown.
     const ok, err = pcall(flushQueue :: Thunk);
     -- finally
     while (notifyIndex < queuedLength) do
