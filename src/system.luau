@@ -411,4 +411,4 @@ const function createReactiveSystem(t: {
     };
 end system.createReactiveSystem = createReactiveSystem;
 
-return table.freeze(system)
+return table.freeze(system);
