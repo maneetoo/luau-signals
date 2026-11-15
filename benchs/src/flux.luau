@@ -26,4 +26,5 @@ return table.freeze {
         local scope = Flux.scope(fn)
         return function() scope:Destroy() end
     end,
+    nestedEffects = true,
 } :: shared.Lib

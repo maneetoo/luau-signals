@@ -8,6 +8,8 @@ export type Lib = {
 	effectCleanup: (() -> (), () -> ()) -> any,
 	batch: (() -> ()) -> (),
 	scope: (() -> ()) -> (() -> ()),
+	--NOTE: `true` only for libraries that allow creating an effect inside another effect (fluid and vide forbid it).
+	nestedEffects: boolean?,
 }
 
 const lcg = function(seed: number): (number) -> number
@@ -418,6 +420,9 @@ return table.freeze {
         {
             name = "effect: nested, parent rerun",
             setup = function(L)
+                if not L.nestedEffects then
+                    error("nested effects are not supported by this library")
+                end
                 const a: (number?) -> number, b: (number?) -> number = L.source(0), L.source(0)
                 local sink: number = 0
                 const dispose = L.scope(function()
@@ -438,13 +443,19 @@ return table.freeze {
             name = "derive: read (cached)",
             setup = function(L)
                 const s: (number?) -> number = L.source(1)
-                const c: () -> number = L.derive(function()
-                    return s() + 1
+                const holder: { () -> number } = {}
+                --NOTE: fluid and vide only allow `derive` inside a scope; the read itself happens outside of it.
+                const dispose = L.scope(function()
+                    holder[1] = L.derive(function()
+                        return s() + 1
+                    end)
                 end)
+                const c = holder[1]
                 c()
                 return function()
                     return c()
-                end
+                end,
+                dispose
             end,
         },
         {

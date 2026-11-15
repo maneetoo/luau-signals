@@ -20,4 +20,5 @@ return table.freeze {
 		signals.endBatch()
 	end,
 	scope = signals.effectScope,
+	nestedEffects = true,
 } :: shared.Lib
