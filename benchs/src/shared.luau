@@ -130,6 +130,8 @@ return table.freeze {
             "effect: create + dispose",
             "effect: rerun with cleanup",
             "effect: dynamic deps (branch toggle)",
+            "effect: rerun, 10 tracked reads",
+            "effect: nested, parent rerun",
         },
         derive = {
             "derive: write + read (depth 1)",
@@ -140,6 +142,8 @@ return table.freeze {
             "derive: diamond -> effect",
             "derive: 1 source -> 50 derives -> 1 effect",
             "derive: cutoff (value unchanged -> effect not rerun)",
+            "derive: read (cached)",
+            "derive: write -> 10 derives, no effects",
         },
         batch = {
             "batch: 10 writes, no batch -> 1 effect",
@@ -158,6 +162,8 @@ return table.freeze {
             "effect: create + dispose",
             "effect: rerun with cleanup",
             "effect: dynamic deps (branch toggle)",
+            "effect: rerun, 10 tracked reads",
+            "effect: nested, parent rerun",
             "derive: write + read (depth 1)",
             "derive: chain depth 10, write + read tail",
             "derive: chain depth 10 -> effect",
@@ -166,6 +172,8 @@ return table.freeze {
             "derive: diamond -> effect",
             "derive: 1 source -> 50 derives -> 1 effect",
             "derive: cutoff (value unchanged -> effect not rerun)",
+            "derive: read (cached)",
+            "derive: write -> 10 derives, no effects",
             "batch: 10 writes, no batch -> 1 effect",
             "batch: 10 writes, batched -> 1 effect",
             "graph: build 20 src + 20 derive + effect, dispose",
@@ -380,6 +388,82 @@ return table.freeze {
                 end)
                 return function(i: number)
                     s(i * 2)
+                end,
+                dispose
+            end,
+        },
+        {
+            name = "effect: rerun, 10 tracked reads",
+            setup = function(L)
+                const srcs: { (number?) -> number } = {}
+                local sink: number = 0
+                const dispose = L.scope(function()
+                    for k = 1, 10 do
+                        srcs[k] = L.source(k)
+                    end
+                    L.effect(function()
+                        local sum: number = 0
+                        for k = 1, 10 do
+                            sum += srcs[k]()
+                        end
+                        sink = sum
+                    end)
+                end)
+                return function(i: number)
+                    srcs[1](i)
+                end,
+                dispose
+            end,
+        },
+        {
+            name = "effect: nested, parent rerun",
+            setup = function(L)
+                const a: (number?) -> number, b: (number?) -> number = L.source(0), L.source(0)
+                local sink: number = 0
+                const dispose = L.scope(function()
+                    L.effect(function()
+                        a()
+                        L.effect(function()
+                            sink = b()
+                        end)
+                    end)
+                end)
+                return function(i: number)
+                    a(i)
+                end,
+                dispose
+            end,
+        },
+        {
+            name = "derive: read (cached)",
+            setup = function(L)
+                const s: (number?) -> number = L.source(1)
+                const c: () -> number = L.derive(function()
+                    return s() + 1
+                end)
+                c()
+                return function()
+                    return c()
+                end
+            end,
+        },
+        {
+            name = "derive: write -> 10 derives, no effects",
+            setup = function(L)
+                const s: (number?) -> number = L.source(0)
+                const ds: { () -> number } = {}
+                const dispose = L.scope(function()
+                    for k = 1, 10 do
+                        ds[k] = L.derive(function()
+                            return s() + k
+                        end)
+                    end
+                end)
+                for k = 1, 10 do
+                    ds[k]()
+                end
+                return function(i: number)
+                    s(i)
                 end,
                 dispose
             end,
