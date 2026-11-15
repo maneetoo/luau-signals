@@ -241,7 +241,9 @@ const function updateComputed(c: ComputedNode): boolean
             --signal, therefore it is a child effect/scope". A literal port is impossible — in Luau a field holding `nil` 
             --does not exist at all, so `signal(nil)` would be misidentified — which is why the node kind is taken from the 
             --metatable (see `SIGNAL_META` below) instead.
-            if (getmetatable(dep) ~= COMPUTED_META and getmetatable(dep) ~= SIGNAL_META) then
+            --NOTE: perf: the metatable is read once instead of twice per dep.
+            const depMeta = getmetatable(dep);
+            if (depMeta ~= COMPUTED_META and depMeta ~= SIGNAL_META) then
                 unlink(depLink, c);
             end;
             depLink = prev;
@@ -284,7 +286,9 @@ const function run(e: EffectNode): ()
             while (depLink ~= nil) do
                 const prev = depLink.prevDep;
                 const dep = depLink.dep;
-                if (getmetatable(dep) ~= COMPUTED_META and getmetatable(dep) ~= SIGNAL_META) then
+                --NOTE: perf: the metatable is read once instead of twice per dep.
+                const depMeta = getmetatable(dep);
+                if (depMeta ~= COMPUTED_META and depMeta ~= SIGNAL_META) then
                     unlink(depLink, e);
                 end;
                 depLink = prev;
